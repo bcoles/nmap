@@ -23,9 +23,10 @@ For more information about MNDP, see:
 -- @output
 -- Pre-scan script results:
 -- | broadcast-nmdp-discover:
--- |   MAC Address: 00:0c:29:6d:a7:63, IP Address: 0.0.0.0; Identity: MikroTik; Version: 6.42.12 (long-term); Platform: MikroTik; Software ID: GXCE-KYGV; Board: x86; Unpacking: None; Interface: ether1
--- |   MAC Address: 00:0c:29:6d:a7:63, IP Address: fe80::20c:29ff:fe6d:a763; Identity: MikroTik; Version: 6.42.12 (long-term); Platform: MikroTik; Software ID: GXCE-KYGV; Board: x86; Unpacking: None; Interface: ether1
--- |_  MAC Address: 00:0c:29:e9:18:f5, IP Address: 0.0.0.0; Identity: MikroTik; Version: 6.41.4 (stable); Platform: MikroTik; Software ID: GXCE-KYGV; Board: x86; Unpacking: Unknown; Interface: ether1
+-- |   MAC Address: 00:0c:29:6d:a7:63, IP Address: 0.0.0.0; Identity: MikroTik; Version: 6.42.12 (long-term); Platform: MikroTik; Software ID: GXCE-KYGV; Uptime: 1h14m; Board: x86; Unpacking: None; Interface: ether1
+-- |   MAC Address: 00:0c:29:6d:a7:63, IP Address: fe80::20c:29ff:fe6d:a763; Identity: MikroTik; Version: 6.42.12 (long-term); Platform: MikroTik; Software ID: GXCE-KYGV; Uptime: 1h14m; Board: x86; Unpacking: None; Interface: ether1
+-- |   MAC Address: 00:0c:29:8b:de:c6, IP Address: 10.1.1.123; Identity: MikroTik; Version: 6.10; Platform: MikroTik; Software ID: 33UY-8JI2; Uptime: 0h42m; Board: x86; Unpacking: None; Interface: ether1
+-- |_  MAC Address: 00:0c:29:8b:de:c6, IP Address: fe80::20c:29ff:fe8b:dec6; Identity: MikroTik; Version: 6.10; Platform: MikroTik; Software ID: 33UY-8JI2; Uptime: 0h42m; Board: x86; Unpacking: None; Interface: ether1
 --
 -- @args broadcast-nmdp-discover.address
 --       address to which the probe packet is sent. (default: 255.255.255.255)
@@ -114,7 +115,10 @@ local nmdpListen = function(interface, timeout, responses)
 
       -- Uptime - unsigned integer (big endian)
       elseif tlv_type == 0x0a then
-        uptime = string.unpack("<I", tlv_value)
+        uptime_num = string.unpack("<I", tlv_value)
+        local h = math.floor(uptime_num / 3600)
+        local m = math.floor((uptime_num - (h * 3600)) / 60)
+        uptime = h .. "h" .. m .. "m"
 
       -- Software ID
       elseif tlv_type == 0x0b then
@@ -142,8 +146,8 @@ local nmdpListen = function(interface, timeout, responses)
       end
     end
 
-    local str = ("MAC Address: %s, IP Address: %s; Identity: %s; Version: %s; Platform: %s; Software ID: %s; Board: %s; Unpacking: %s; Interface: %s"):format(
-      mac_address, p.ip_src, identity, version, platform, software_id, board, unpacking, interface)
+    local str = ("MAC Address: %s, IP Address: %s; Identity: %s; Version: %s; Platform: %s; Software ID: %s; Uptime: %s; Board: %s; Unpacking: %s; Interface: %s"):format(
+      mac_address, p.ip_src, identity, version, platform, software_id, uptime, board, unpacking, interface)
 
     table.insert(responses, str)
 

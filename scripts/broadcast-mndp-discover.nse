@@ -7,7 +7,7 @@ local os = require "os"
 local table = require "table"
 
 description = [[
-Discovers MikroTik devices on a LAN by sending a MikroTik Neighbor Discovery Protocol (NMDP) network broadcast probe.
+Discovers MikroTik devices on a LAN by sending a MikroTik Neighbor Discovery Protocol (MNDP) network broadcast probe.
 
 For more information about MNDP, see:
 * https://mikrotik.com/testdocs/ros/2.9/ip/mndp.php
@@ -17,20 +17,20 @@ For more information about MNDP, see:
 ]]
 
 ---
--- @usage nmap --script broadcast-nmdp-discover
--- @usage nmap --script broadcast-nmdp-discover --script-args timeout=5s -e eth0
+-- @usage nmap --script broadcast-mndp-discover
+-- @usage nmap --script broadcast-mndp-discover --script-args timeout=5s -e eth0
 --
 -- @output
 -- Pre-scan script results:
--- | broadcast-nmdp-discover:
+-- | broadcast-mndp-discover:
 -- |   MAC Address: 00:0c:29:6d:a7:63, IP Address: 0.0.0.0; Identity: MikroTik; Version: 6.42.12 (long-term); Platform: MikroTik; Software ID: GXCE-KYGV; Uptime: 1h14m; Board: x86; Unpacking: None; Interface: ether1
 -- |   MAC Address: 00:0c:29:6d:a7:63, IP Address: fe80::20c:29ff:fe6d:a763; Identity: MikroTik; Version: 6.42.12 (long-term); Platform: MikroTik; Software ID: GXCE-KYGV; Uptime: 1h14m; Board: x86; Unpacking: None; Interface: ether1
 -- |   MAC Address: 00:0c:29:8b:de:c6, IP Address: 10.1.1.123; Identity: MikroTik; Version: 6.10; Platform: MikroTik; Software ID: 33UY-8JI2; Uptime: 0h42m; Board: x86; Unpacking: None; Interface: ether1
 -- |_  MAC Address: 00:0c:29:8b:de:c6, IP Address: fe80::20c:29ff:fe8b:dec6; Identity: MikroTik; Version: 6.10; Platform: MikroTik; Software ID: 33UY-8JI2; Uptime: 0h42m; Board: x86; Unpacking: None; Interface: ether1
 --
--- @args broadcast-nmdp-discover.address
+-- @args broadcast-mndp-discover.address
 --       address to which the probe packet is sent. (default: 255.255.255.255)
--- @args broadcast-nmdp-discover.timeout
+-- @args broadcast-mndp-discover.timeout
 --       socket timeout (default: 5s)
 ---
 
@@ -43,11 +43,11 @@ prerule = function() return ( nmap.address_family() == "inet") end
 local arg_address = stdnse.get_script_args(SCRIPT_NAME .. ".address")
 local arg_timeout = stdnse.parse_timespec(stdnse.get_script_args(SCRIPT_NAME .. ".timeout"))
 
--- Listens for NMDP response messages.
+-- Listens for MNDP response messages.
 --@param interface Network interface to listen on.
 --@param timeout Time to listen for a response.
 --@param responses table to insert response data into.
-local nmdpListen = function(interface, timeout, responses)
+local mndpListen = function(interface, timeout, responses)
   local condvar = nmap.condvar(responses)
   local start = nmap.clock_ms()
   local listener = nmap.new_socket()
@@ -70,7 +70,7 @@ local nmdpListen = function(interface, timeout, responses)
       goto continue
     end
 
-    stdnse.print_debug(1, "Received NMDP response from %s (%s bytes)", p.ip_src, string.len(data))
+    stdnse.print_debug(1, "Received MNDP response from %s (%s bytes)", p.ip_src, string.len(data))
 
     local tlv_type, tlv_len, tlv_value, pos
     pos = 1
@@ -197,7 +197,7 @@ action = function()
   -- Launch listener thread
   local results = {}
   local timeout = (tonumber(arg_timeout) or 5) * 1000
-  stdnse.new_thread(nmdpListen, interface, timeout, results)
+  stdnse.new_thread(mndpListen, interface, timeout, results)
   stdnse.sleep(0.5)
 
   -- send two packets, just in case

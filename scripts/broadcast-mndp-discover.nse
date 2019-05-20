@@ -51,13 +51,12 @@ local mndpListen = function(interface, timeout, responses)
   local condvar = nmap.condvar(responses)
   local start = nmap.clock_ms()
   local listener = nmap.new_socket()
-  local status, l3data
   local filter = 'udp src port 5678 and udp dst port 5678 and src host not ' .. interface.address
   listener:set_timeout(500)
   listener:pcap_open(interface.device, 1024, true, filter)
 
   while (nmap.clock_ms() - start) < timeout do
-    status, _, _, l3data = listener:pcap_receive()
+    local status, _, _, l3data = listener:pcap_receive()
 
     if not status then
       goto continue

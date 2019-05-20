@@ -146,9 +146,28 @@ local mndpListen = function(interface, timeout, responses)
       end
     end
 
-    local str = ("MAC Address: %s, IP Address: %s; Identity: %s; Version: %s; Platform: %s; Software ID: %s; Uptime: %s; Board: %s; Unpacking: %s; Interface: %s"):format(
-      mac_address, p.ip_src, identity, version, platform, software_id, uptime, board, unpacking, interface)
+    local str = stdnse.output_table()
+    str["MAC Address"] = mac_address
+    str["IP Address"] = p.ip_src
+    str["Identity"] = identity
+    str["Version"] = version
+    str["Platform"] = platform
+    str["Software ID"] = software_id
+    str["Uptime"] = uptime
+    str["Board"] = board
+    str["Unpacking"] = unpacking
+    str["Interface"] = interface
 
+    local mt = getmetatable(str) or {}
+    mt.__tostring = function(self)
+      local t = {}
+      for k, v in pairs(self) do
+        t[#t+1] = ("%s: %s"):format(k, v)
+      end
+      return table.concat(t, "; ")
+    end
+
+    setmetatable(str, mt)
     table.insert(responses, str)
 
     ::continue::

@@ -78,22 +78,12 @@ local mndpListen = function(interface, timeout, responses)
     --local seqno = data:sub(pos, pos + 1)
     pos = pos + 2
 
-    local mac_address, identity, version, platform, uptime, software_id, board, unpacking, interface
+    local mac_address, identity, version, platform, uptime, software_id, board, unpacking, ipv6_address, interface
     while (pos < #data) do
-      -- TLV Type - Unsigned integer (2 bytes)
-      tlv_type = string.unpack(">I2", data:sub(pos, pos + 1))
-      pos = pos + 2
-
-      -- TLV Length - Unsigned integer (2 bytes)
-      tlv_len  = string.unpack(">I2", data:sub(pos, pos + 1))
-      pos = pos + 2
-
-      -- TLV Value
-      tlv_value = data:sub(pos, pos + tlv_len - 1)
-      pos = pos + tlv_len
+      tlv_type, tlv_value, pos = string.unpack(">I2s2", data, pos)
 
       --stdnse.print_debug(2, "TLV Type: %s", tlv_type)
-      --stdnse.print_debug(2, "TLV Length: %s", tlv_len)
+      --stdnse.print_debug(2, "TLV Length: %s", string.len(tlv_value))
       --stdnse.print_debug(2, "TLV Value: %s", stdnse.tohex(tlv_value))
 
       -- MAC address
@@ -135,6 +125,10 @@ local mndpListen = function(interface, timeout, responses)
           unpacking = "Unknown"
         end
 
+      -- IPv6 Address
+      elseif tlv_type == 0x0f then
+        ipv6_address = stdnse.tohex(tlv_value)
+
       -- Interface
       elseif tlv_type == 0x10 then
         interface = tlv_value
@@ -155,6 +149,7 @@ local mndpListen = function(interface, timeout, responses)
     str["Uptime"] = uptime
     str["Board"] = board
     str["Unpacking"] = unpacking
+    str["IPv6 Address"] = ipv6_address
     str["Interface"] = interface
 
     local mt = getmetatable(str) or {}

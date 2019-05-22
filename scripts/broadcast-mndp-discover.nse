@@ -114,7 +114,7 @@ local mndpListen = function(interface, timeout, responses)
 
       -- Uptime - unsigned integer
       elseif tlv_type == 0x0a then
-        uptime_num = string.unpack(string.format("<I%d", tlv_len), tlv_value)
+        uptime_num = string.unpack("<I4", tlv_value)
         local h = math.floor(uptime_num / 3600)
         local m = math.floor((uptime_num - (h * 3600)) / 60)
         uptime = h .. "h" .. m .. "m"
